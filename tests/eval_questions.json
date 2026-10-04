@@ -1,0 +1,86 @@
+[
+  {
+    "id": 1,
+    "categoria": "Bilheteria e Finanças",
+    "pergunta": "Quais são os 5 filmes com maior receita em R$?",
+    "sql_ground_truth": "SELECT m.titulo, f.receita_brl FROM dim_movies m JOIN fact_movies_performance f ON m.sk_movie_id=f.sk_movie_id WHERE f.receita_brl IS NOT NULL ORDER BY f.receita_brl DESC LIMIT 5",
+    "must_contain": ["Avatar", "Endgame", "Spider-man"]
+  },
+  {
+    "id": 2,
+    "categoria": "Bilheteria e Finanças",
+    "pergunta": "Qual o lucro médio por gênero, considerando apenas filmes com receita informada? Liste os 3 maiores.",
+    "sql_ground_truth": "SELECT g.nome_genero, AVG(f.lucro_usd) AS lucro_medio FROM dim_movies m JOIN fact_movies_performance f ON m.sk_movie_id=f.sk_movie_id JOIN bridge_movie_genre bg ON m.sk_movie_id=bg.sk_movie_id JOIN dim_genres g ON bg.sk_genre_id=g.sk_genre_id WHERE f.receita_usd IS NOT NULL GROUP BY g.nome_genero ORDER BY lucro_medio DESC LIMIT 3",
+    "must_contain": ["Adventure", "Action"]
+  },
+  {
+    "id": 3,
+    "categoria": "Bilheteria e Finanças",
+    "pergunta": "Quais filmes têm a maior margem de lucro, entre os que possuem receita e orçamento informados? Mostre os 5 primeiros.",
+    "sql_ground_truth": "SELECT m.titulo, ROUND(f.lucro_usd/f.receita_usd*100, 2) AS margem_pct FROM dim_movies m JOIN fact_movies_performance f ON m.sk_movie_id=f.sk_movie_id WHERE f.receita_usd > 0 AND f.orcamento_usd IS NOT NULL ORDER BY margem_pct DESC LIMIT 5",
+    "must_contain": []
+  },
+  {
+    "id": 4,
+    "categoria": "Popularidade e Engajamento",
+    "pergunta": "Quais são os 5 filmes mais populares?",
+    "sql_ground_truth": "SELECT m.titulo, f.popularidade FROM dim_movies m JOIN fact_movies_performance f ON m.sk_movie_id=f.sk_movie_id WHERE f.popularidade IS NOT NULL ORDER BY f.popularidade DESC LIMIT 5",
+    "must_contain": ["Blue Beetle", "Gran Turismo"]
+  },
+  {
+    "id": 5,
+    "categoria": "Popularidade e Engajamento",
+    "pergunta": "Quais filmes têm a maior divergência entre a nota TMDB e a nota IMDb? Mostre os 5 primeiros.",
+    "sql_ground_truth": "SELECT m.titulo, f.nota_tmdb, f.nota_imdb, ABS(f.nota_tmdb - f.nota_imdb) AS diff FROM dim_movies m JOIN fact_movies_performance f ON m.sk_movie_id=f.sk_movie_id WHERE f.nota_tmdb IS NOT NULL AND f.nota_imdb IS NOT NULL ORDER BY diff DESC LIMIT 5",
+    "must_contain": []
+  },
+  {
+    "id": 6,
+    "categoria": "Popularidade e Engajamento",
+    "pergunta": "Qual a nota média IMDb por ano de lançamento, entre 2021 e 2025?",
+    "sql_ground_truth": "SELECT m.ano_lancamento, ROUND(AVG(f.nota_imdb), 2) AS media FROM dim_movies m JOIN fact_movies_performance f ON m.sk_movie_id=f.sk_movie_id WHERE f.nota_imdb IS NOT NULL AND m.ano_lancamento BETWEEN 2021 AND 2025 GROUP BY m.ano_lancamento ORDER BY m.ano_lancamento",
+    "must_contain": ["2021", "2025"]
+  },
+  {
+    "id": 7,
+    "categoria": "Elenco e Equipe",
+    "pergunta": "Quais diretores têm a maior nota média IMDb, considerando apenas diretores com pelo menos 5 filmes?",
+    "sql_ground_truth": "SELECT p.nome_pessoa, ROUND(AVG(f.nota_imdb), 2) AS media, COUNT(*) AS n FROM dim_movies m JOIN bridge_movie_person bp ON m.sk_movie_id=bp.sk_movie_id JOIN dim_people p ON bp.sk_person_id=p.sk_person_id AND p.tipo_pessoa='Diretor' JOIN fact_movies_performance f ON m.sk_movie_id=f.sk_movie_id WHERE f.nota_imdb IS NOT NULL GROUP BY p.nome_pessoa HAVING COUNT(*) >= 5 ORDER BY media DESC LIMIT 5",
+    "must_contain": ["Scott Wozniak"]
+  },
+  {
+    "id": 8,
+    "categoria": "Elenco e Equipe",
+    "pergunta": "Qual a dupla ator-diretor que mais trabalhou junta?",
+    "sql_ground_truth": "SELECT d.nome_pessoa AS diretor, a.nome_pessoa AS ator, COUNT(DISTINCT m.sk_movie_id) AS n FROM dim_movies m JOIN bridge_movie_person bd ON m.sk_movie_id=bd.sk_movie_id JOIN dim_people d ON bd.sk_person_id=d.sk_person_id AND d.tipo_pessoa='Diretor' JOIN bridge_movie_person ba ON m.sk_movie_id=ba.sk_movie_id JOIN dim_people a ON ba.sk_person_id=a.sk_person_id AND a.tipo_pessoa='Ator' GROUP BY d.nome_pessoa, a.nome_pessoa ORDER BY n DESC LIMIT 3",
+    "must_contain": ["Kevin Dunn"]
+  },
+  {
+    "id": 9,
+    "categoria": "Gêneros e Produtoras",
+    "pergunta": "Quantos filmes existem por gênero? Mostre os 5 gêneros com mais filmes.",
+    "sql_ground_truth": "SELECT g.nome_genero, COUNT(*) AS n FROM dim_movies m JOIN bridge_movie_genre bg ON m.sk_movie_id=bg.sk_movie_id JOIN dim_genres g ON bg.sk_genre_id=g.sk_genre_id GROUP BY g.nome_genero ORDER BY n DESC LIMIT 5",
+    "must_contain": ["Drama", "Document", "Com"]
+  },
+  {
+    "id": 10,
+    "categoria": "Gêneros e Produtoras",
+    "pergunta": "Qual a produtora com maior lucro total?",
+    "sql_ground_truth": "SELECT c.nome_produtora, SUM(f.lucro_usd) AS lucro_total FROM dim_movies m JOIN fact_movies_performance f ON m.sk_movie_id=f.sk_movie_id JOIN bridge_movie_company bc ON m.sk_movie_id=bc.sk_movie_id JOIN dim_companies c ON bc.sk_company_id=c.sk_company_id WHERE f.lucro_usd IS NOT NULL GROUP BY c.nome_produtora ORDER BY lucro_total DESC LIMIT 3",
+    "must_contain": []
+  },
+  {
+    "id": 11,
+    "categoria": "Avaliações dos Usuários",
+    "pergunta": "Quais filmes foram mais avaliados pelos usuários? Mostre os 5 primeiros.",
+    "sql_ground_truth": "SELECT m.titulo, SUM(r.qtd_avaliacoes_usuarios) AS total_aval FROM dim_movies m JOIN dim_reviews r ON m.sk_movie_id=r.sk_movie_id WHERE r.qtd_avaliacoes_usuarios IS NOT NULL GROUP BY m.sk_movie_id, m.titulo ORDER BY total_aval DESC LIMIT 5",
+    "must_contain": ["Die Hart"]
+  },
+  {
+    "id": 12,
+    "categoria": "Avaliações dos Usuários",
+    "pergunta": "Em quais filmes a nota média dos usuários mais diverge da nota IMDb? Mostre os 5 primeiros.",
+    "sql_ground_truth": "SELECT m.titulo, AVG(r.nota_media_usuarios) AS media_users, f.nota_imdb, ABS(AVG(r.nota_media_usuarios) - f.nota_imdb) AS diff FROM dim_movies m JOIN dim_reviews r ON m.sk_movie_id=r.sk_movie_id JOIN fact_movies_performance f ON m.sk_movie_id=f.sk_movie_id WHERE r.nota_media_usuarios IS NOT NULL AND f.nota_imdb IS NOT NULL GROUP BY m.sk_movie_id, m.titulo, f.nota_imdb ORDER BY diff DESC LIMIT 5",
+    "must_contain": []
+  }
+]

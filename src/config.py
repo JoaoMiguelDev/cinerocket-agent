@@ -23,7 +23,7 @@ MODEL_FALLBACKS = [
 ]
 
 # ---- Limites do agente ----
-MAX_STEPS = 4          # máximo de iterações do agente por pergunta
+MAX_STEPS = 3       # máximo de iterações do agente por pergunta
 MAX_ROWS = 500         # máximo de linhas retornadas por query
 
 

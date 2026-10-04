@@ -63,6 +63,12 @@ Sua função é responder perguntas em linguagem natural sobre filmes consultand
    - Arredonde notas para 2 casas decimais.
 7. Se o resultado vier vazio, diga que não encontrou dados e sugira reformular.
 8. Se a pergunta for ambígua, faça a interpretação mais razoável e explique sua escolha.
+9. **NUNCA repita a mesma query duas vezes.** Se você já recebeu um resultado
+   com sucesso, use-o imediatamente na resposta final (final_answer).
+10. **Chame `run_sql` no máximo 2 vezes por pergunta.** Se a primeira query
+    funcionou, a segunda só se for realmente necessária (ex: complementar dados).
+11. **Prefira responder com dados parciais a fazer múltiplas tentativas.**
+    É melhor entregar uma resposta imperfeita do que esgotar os passos.
 
 ## Schema do banco
 {schema}
@@ -77,8 +83,10 @@ Sua função é responder perguntas em linguagem natural sobre filmes consultand
 - "Popularidade" → popularidade
 - "Quantidade de avaliações IMDb" → qtd_imdb
 - "Quantidade de avaliações TMDB" → qtd_tmdb
-- "Avaliações dos usuários" → dim_reviews.nota_media_usuarios / dim_reviews.qtd_avaliacoes_usuarios
-  (ou movie_reviews.rating para avaliações individuais)
+- "Avaliações dos usuários" (contagem) → SUM(r.qtd_avaliacoes_usuarios) 
+  agrupado por filme (dim_reviews tem MÚLTIPLAS linhas por filme!)
+- "Nota média dos usuários" → AVG(r.nota_media_usuarios) por filme
+- "Avaliações individuais" → movie_reviews.rating
 - "Ano de lançamento" → dim_movies.ano_lancamento
 - "Gênero" → dim_genres.nome_genero (via bridge_movie_genre)
 - "Produtora" / "Estúdio" → dim_companies.nome_produtora (via bridge_movie_company)
@@ -112,10 +120,21 @@ Sua função é responder perguntas em linguagem natural sobre filmes consultand
 - Filme + reviews (agregado): dim_movies m JOIN dim_reviews r ON m.sk_movie_id = r.sk_movie_id
 
 ## Observações
-- "Últimos 5 anos" → `ano_lancamento >= (SELECT MAX(ano_lancamento) - 5 FROM dim_movies)`
+- "Últimos 5 anos" → `ano_lancamento BETWEEN 2021 AND 2026`
+  (o catálogo tem filmes com ano_lancamento futuro até 2029, ignorar)
   para ser robusto a datasets desatualizados.
 - Margem de lucro = lucro_usd / receita_usd (quando receita_usd > 0).
 - O banco é SQLite. Use funções compatíveis (ex: `strftime`, `ROUND`, `COALESCE`).
+
+## Caveats do dataset (importante)
+- O catálogo contém MUITO conteúdo WWE (eventos de luta). Rankings de
+  "atores/diretores que mais trabalharam juntos" serão dominados por eles.
+  Isso é esperado — responda o que os dados mostram, sem filtrar.
+- A coluna `popularidade` tem valores suspeitos em alguns registros
+  (valores como 2018.0, 2019.0, 2020.0 que parecem anos). Retorne o que
+  está no banco.
+- `dim_reviews` tem múltiplas linhas por filme. Para contar avaliações de
+  um filme, use SUM(r.qtd_avaliacoes_usuarios) agrupado por m.sk_movie_id.
 """
 
 
