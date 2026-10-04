@@ -1,0 +1,16 @@
+# Ambiente virtual
+venv/
+.venv/
+
+# Variáveis de ambiente
+.env
+
+# Banco de dados
+data/cinerocket.db
+
+# Cache do Python
+__pycache__/
+*.pyc
+
+# Notebooks
+.ipynb_checkpoints/
