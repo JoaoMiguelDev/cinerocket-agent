@@ -14,3 +14,6 @@ __pycache__/
 
 # Notebooks
 .ipynb_checkpoints/
+
+# Cache do agente
+.cache/
